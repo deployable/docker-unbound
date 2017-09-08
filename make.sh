@@ -14,7 +14,7 @@ set -e
 sudo docker run \
   --detach \
   --name $CONTAINER_NAME \
-  --publish 172.30.1.102:53:53/udp \
+  --publish 53:53/udp \
   --restart always \
   $IMG_TAG
 
