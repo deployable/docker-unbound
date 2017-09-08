@@ -19,4 +19,4 @@ sudo docker run \
   $IMG_TAG
 
 sudo docker ps 
-
+sudo docker logs -f $CONTAINER_NAME
