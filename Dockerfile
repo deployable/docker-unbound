@@ -4,7 +4,7 @@ RUN set -uex; \
     apt-get update; \
     apt-get install -y unbound;
 
-COPY unbound.conf /etc/unbound/unbound.conf
+COPY unbound.aws.ap-southeast-2.conf /etc/unbound/unbound.conf
 
 CMD unbound -d
 
