@@ -20,22 +20,22 @@ fi
 cd "$rundir"
 
 
-build(){
-  build_default
-  build_apse2 
+run_build(){
+  run_build_default
+  run_build_apse2 
 }
 
-build_default(){
-  template unbound.conf Dockerfile
+run_build_default(){
+  run_template unbound.conf Dockerfile
   docker build -t $IMG_TAG .
 }
 
-build_apse2(){
-  template unbound.aws.apse2.conf Dockerfile.apse2
+run_build_apse2(){
+  run_template unbound.aws.apse2.conf Dockerfile.apse2
   docker build -t $IMG_TAG-apse2 -f Dockerfile.apse2 .
 }
 
-run(){
+run_run(){
   set +e
   docker rm -f $CONTAINER_NAME
   set -e
@@ -50,7 +50,7 @@ run(){
   docker logs --tail 20 $CONTAINER_NAME
 }
 
-template(){
+run_template(){
   template_conffile=$1
   template_dockerfile=$2
   perl -pe 'BEGIN{ $conffile=shift @ARGV; } s/{{unbound_conf}}/$conffile/' $template_conffile Dockerfile.template > "$template_dockerfile"
@@ -64,9 +64,9 @@ run_help(){
 set +x
 
 case $cmd in
-  "build")     build "$@";;
-  "template")  template "$@";;
-  "run")       run "$@";;
+  "build")     run_build "$@";;
+  "template")  run_template "$@";;
+  "run")       run_run "$@";;
   '-h'|'--help'|'h'|'help') run_help;;
 esac
 
