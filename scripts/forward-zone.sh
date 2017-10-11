@@ -6,11 +6,13 @@ rundir=${0%/*}
 whom_arg=${1:-}
 whom_trim=${whom_arg#*://}
 whom=${whom_trim%%/*}
-if [ "$whom" != "$whom_arg" ]; then
-  echo "Trimmed domain to [$whom]"
-fi
 
 # dig a domain, if there's cnames add them too
+
+error_die(){
+  echo "Error: $@"
+  exit 1
+}
 
 get_cnames(){
   local domain=$1
@@ -35,7 +37,7 @@ print_zone(){
   local domain=$1
   printf "forward-zone:
   name: \"$domain\"
-  forward-addr: 8.8.8.8
+  forward-addr: $forwarder
 "
 }
 
@@ -43,7 +45,7 @@ print_zone_comment(){
   local domain=$1
   printf "#forward-zone:
 #  name: \"$domain\"
-#  forward-addr: 8.8.8.8
+#  forward-addr: $forwarder
 "
 }
 
@@ -52,6 +54,21 @@ reload_unbound(){
 }
 
 # doit
+
+if [ "$whom" != "$whom_arg" ]; then
+  echo "Trimmed domain to [$whom]"
+fi
+if [ -z "$whom" ]; then
+  error_die "Needs a domain/url as first argument"
+fi
+if [ -f .forward-addr ]; then 
+  forwarder=$(cat .forward-addr)
+  if [ -z "$forwarder" ]; then
+    error_die "no forwarder in .forward-addr"
+  fi
+else 
+  forwarder="8.8.8.8"
+fi
 
 domain=$whom
 echo "Looking up \"$domain\""
