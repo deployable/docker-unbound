@@ -1,6 +1,6 @@
 # Unbound in Docker
 
-Unbound forwarders in a container - https://hub.docker.com/r/deployable/unbound/
+Unbound DNS forwarder in a container - https://hub.docker.com/r/deployable/unbound/
 
 ## Local
 
