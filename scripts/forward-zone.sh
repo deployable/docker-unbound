@@ -6,6 +6,7 @@ rundir=${0%/*}
 whom_arg=${1:-}
 whom_trim=${whom_arg#*://}
 whom=${whom_trim%%/*}
+tag=${2:-}
 
 # dig a domain, if there's cnames add them too
 
@@ -17,6 +18,7 @@ error_die(){
 get_cnames(){
   local domain=$1
   dig @8.8.8.8 $domain | awk '/CNAME/ { print $NF }'
+#  dig @172.30.1.102 $domain | awk '/CNAME/ { print $NF }'
 }
 
 check_forward_zone_exists(){
@@ -24,12 +26,25 @@ check_forward_zone_exists(){
   grep -A2 "^forward-zone:" unbound.conf | grep "  name: \"$domain\"" >/dev/null
 }
 
+print_zone_header(){
+  local domain=$1
+  local tag=$2
+  local file=$3
+  local date_now=$(date)
+  echo >> $file
+  echo "# ## $domain - $tag - $date_now" >> $file
+  echo "# domain: $domain" >> $file
+  echo "# tag: $tag" >> $file
+  echo "# date: $date_now" >> $file
+}
+
 print_zone_or_comment(){
   local domain=$1
+  local file=$2
   if check_forward_zone_exists "$domain"; then
-    print_zone_comment "$domain" >> unbound.conf
+    print_zone_comment "$domain" >> $file
   else
-    print_zone "$domain" >> unbound.conf
+    print_zone "$domain" >> $file
   fi
 }
 
@@ -69,20 +84,28 @@ if [ -f .forward-addr ]; then
 else 
   forwarder="8.8.8.8"
 fi
+if [ -z "$tag" ]; then
+  echo "No tag, using 'default'"
+  tag=default
+fi
 
 domain=$whom
 echo "Looking up \"$domain\""
 cnames=$(get_cnames "$domain")
-echo "adding $domain"
+echo "adding $domain with $tag"
 
-echo >> unbound.conf
-echo "# ## $domain - $(date)" >> unbound.conf
+file_config=unbound.conf
+file_tag_config=configs/unbound.$tag.config
 
-print_zone_or_comment "$domain"
+print_zone_header "$domain" "$tag" "$file_config"
+print_zone_header "$domain" "$tag" "$file_tag_config"
+print_zone_or_comment "$domain" "$file_config"
+print_zone "$domain" >> "$file_tag_config"
 
 for host in $cnames; do 
   echo "adding $host"
-  print_zone_or_comment "$host"
+  print_zone_or_comment "$host" "$file_config"
+  print_zone_or_comment "$host" "$file_tag_config"
 done 
 
 reload_unbound
